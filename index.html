@@ -3,9 +3,145 @@
 <head>
   <meta charset="UTF-8">
   <title>NIXY UPLOAD</title>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9615914347960451"
+     crossorigin="anonymous"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link rel="stylesheet" href="fhxEw.css">
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      max-width: 480px;
+      margin: auto;
+      padding: 24px;
+      background: transparent;
+      color: inherit;
+    }
+    .file-box {
+      border: 2px dashed #8884;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s ease;
+      margin-bottom: 16px;
+    }
+    .file-box:hover { background: #2222; }
+    .file-box input { display: none; }
+    .file-box label {
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+      display: inline-block;
+    }
+    .file-name {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #ccc;
+      text-align: left;
+      list-style: none;
+      padding-left: 0;
+    }
+    .file-name li {
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+    }
+    .file-name i {
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    .file-name .name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+      width: 100%;
+    }
+    .progress {
+      background: #3333;
+      height: 24px;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: #4ade80;
+      color: #000;
+      text-align: center;
+      line-height: 24px;
+      font-weight: bold;
+      transition: width 0.3s ease;
+    }
+    .result {
+      display: none;
+      margin-top: 16px;
+      padding: 12px;
+      background: #1c1c1c;
+      border-left: 5px solid #4ade80;
+      border-radius: 6px;
+      font-weight: 500;
+      color: #4ade80;
+    }
+    .btn-copy {
+      margin-top: 8px;
+      padding: 10px 14px;
+      width: 100%;
+      border-radius: 10px;
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      font-size: 15px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 6px 14px #0003;
+      transition: transform 0.15s ease;
+    }
+    .btn-copy:active {
+      transform: scale(0.96);
+    }
+    .btn-copy.page { background: #6366f1; }
+    .btn-copy.direct { background: #10b981; }
+    .btn-copy.qr { background: #f97316; }
+    button.upload {
+      background: linear-gradient(to right, #facc15, #fbbf24);
+      color: #000;
+      font-weight: 600;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      width: 100%;
+      margin-top: 16px;
+      transition: 0.2s ease;
+      box-shadow: 0 6px 14px #0002;
+    }
+    button.upload:active {
+      transform: scale(0.96);
+    }
+    button.upload:disabled { opacity: 0.6; cursor: not-allowed; }
+    #popup {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(34, 197, 94, 0.95);
+      color: white;
+      padding: 14px 28px;
+      border-radius: 12px;
+      z-index: 999;
+      font-size: 15px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      backdrop-filter: blur(5px);
+      align-items: center;
+      gap: 10px;
+    }
+  </style>
 </head>
 <body>
   <center><h1><i class="fas fa-cloud-upload-alt"></i> Upload File</h1></center>
@@ -22,7 +158,114 @@
   <button class="btn-copy qr" onclick="downloadQR()" style="display:none"><i class="fas fa-qrcode"></i> Download Your QR Code.</button>
   <div id="popup"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
-  <script src="yiokr.js"></script>
+<script>
+  const TOKEN = "fkquI3coDZlGCfeQbpvPKUUyWqupchIt";
+  let pageLink = "", directLink = "";
+
+  function showSelectedFiles() {
+    const files = document.getElementById("fileInput").files;
+    const nameBox = document.getElementById("fileName");
+    nameBox.innerHTML = "";
+    if (!files.length) return;
+    Array.from(files).forEach((file, index) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<i class='fa-solid fa-file'></i> <span class='name'>${index + 1}. ${file.name}</span>`;
+      nameBox.appendChild(li);
+    });
+  }
+
+  async function upload() {
+    const files = document.getElementById("fileInput").files;
+    const bar = document.getElementById("bar");
+    const resultText = document.getElementById("resultText");
+    const btnPage = document.querySelector(".btn-copy.page");
+    const btnDirect = document.querySelector(".btn-copy.direct");
+    const btnQR = document.querySelector(".btn-copy.qr");
+    const uploadBtn = document.getElementById("uploadBtn");
+
+    if (!files.length) return alert("Select the file first!");
+
+    uploadBtn.disabled = true;
+    resultText.style.display = "none";
+    btnPage.style.display = "none";
+    btnDirect.style.display = "none";
+    btnQR.style.display = "none";
+    bar.style.width = "0%";
+    bar.textContent = "0%";
+
+    const form = new FormData();
+    for (const f of files) form.append("file", f);
+    form.append("token", TOKEN);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://upload.gofile.io/uploadfile", true);
+    xhr.setRequestHeader("Authorization", `Bearer ${TOKEN}`);
+
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) {
+        const pct = Math.floor((e.loaded / e.total) * 100);
+        bar.style.width = pct + "%";
+        bar.textContent = pct + "%";
+      }
+    };
+
+    xhr.onload = () => {
+      uploadBtn.disabled = false;
+      let res;
+      try {
+        res = JSON.parse(xhr.responseText);
+      } catch {
+        return showPopup("<i class='fas fa-times-circle'></i> Failed to parse response.");
+      }
+      if (res.status === "ok") {
+        const file = res.data;
+        const fileName = file.name || "file.unknown";
+        const fileId = file.id;
+        const server = file.downloadPage.split(".")[0].split("//")[1].replace("gofile", "store2");
+        pageLink = file.downloadPage;
+        directLink = `https://${server}.gofile.io/download/web/${fileId}/${fileName}`;
+
+        resultText.style.display = "block";
+        btnPage.style.display = "flex";
+        btnDirect.style.display = "flex";
+        btnQR.style.display = "flex";
+      } else {
+        showPopup("<i class='fas fa-times-circle'></i> Upload failed.");
+      }
+    };
+
+    xhr.onerror = () => {
+      uploadBtn.disabled = false;
+      showPopup("<i class='fas fa-times-circle'></i> Network error.");
+    };
+    xhr.send(form);
+  }
+
+  function copyLink(type) {
+    const text = type === "direct" ? directLink : pageLink;
+    navigator.clipboard.writeText(text)
+      .then(() => showPopup("<i class='fas fa-check-circle'></i> Coppied!"))
+      .catch(() => showPopup("<i class='fas fa-times-circle'></i> Fail!"));
+  }
+
+  function downloadQR() {
+    const qr = new QRious({ value: directLink, size: 250 });
+    const a = document.createElement("a");
+    a.href = qr.toDataURL();
+    a.download = "POWERED BY NIXY MINE.png";
+    a.click();
+  }
+
+  function showPopup(msg) {
+    const pop = document.getElementById("popup");
+    pop.innerHTML = msg;
+    pop.style.display = "flex";
+    clearTimeout(pop.timeout);
+    pop.timeout = setTimeout(() => {
+      pop.style.display = "none";
+    }, 2500);
+  }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 </body>
 </html>
