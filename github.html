@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>NIXY Cloud</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 40px 20px;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle, #1a1a1a, #000000);
+      color: #facc15;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      font-size: 26px;
+      text-align: center;
+      margin-bottom: 30px;
+      background: linear-gradient(to right, #facc15, #f97316);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .uploader {
+      background: rgba(255,255,255,0.05);
+      padding: 30px;
+      border-radius: 20px;
+      border: 2px dashed #facc1580;
+      text-align: center;
+      box-shadow: 0 0 20px #facc1530;
+    }
+
+    .uploader:hover {
+      background: rgba(255,255,255,0.08);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    label {
+      cursor: pointer;
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: 2px solid #facc15aa;
+      background: #1f1f1f;
+      color: #facc15;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 10px;
+    }
+
+    .filename {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #ccc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .btn {
+      margin-top: 20px;
+      padding: 14px 20px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(to right, #facc15, #fbbf24);
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .btn:hover {
+      opacity: 0.95;
+    }
+
+    .progress {
+      background: #222;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 20px;
+      width: 100%;
+    }
+
+    .bar {
+      height: 20px;
+      width: 0%;
+      background: #22c55e;
+      color: #000;
+      text-align: center;
+      font-size: 12px;
+      font-weight: bold;
+      line-height: 20px;
+      transition: width 0.4s ease;
+    }
+
+    .links {
+      margin-top: 30px;
+      width: 100%;
+      text-align: left;
+    }
+
+    .links h3 {
+      margin-bottom: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .link-button {
+      background: #1f1f1f;
+      border: 2px solid #facc15aa;
+      color: #facc15;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: auto;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f1f1f;
+      color: #facc15;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: 1px solid #facc15aa;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 9999;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fab fa-github"></i> GitHub</h1>
+
+    <div class="uploader">
+      <input type="file" id="fileInput" />
+      <label for="fileInput"><i class="fas fa-folder-open"></i> Pilih File Apapun</label>
+      <div class="filename" id="fileName">Belum ada file</div>
+    </div>
+
+    <button class="btn" onclick="uploadFile()">
+      <i class="fas fa-cloud-upload-alt"></i> Upload
+    </button>
+
+    <div class="progress" id="progressContainer" style="display:none;">
+      <div class="bar" id="bar">Uploading...</div>
+    </div>
+
+    <div class="links" id="result" style="display:none;">
+      <h3><i class="fas fa-link"></i> Hasil Upload</h3>
+
+      <div class="link-button" onclick="copyLink('previewLink')">
+        <i class="fas fa-copy"></i> Salin Preview Link
+        <input id="previewLink" readonly style="display:none" />
+      </div>
+
+      <div class="link-button" onclick="copyLink('rawLink')">
+        <i class="fas fa-copy"></i> Salin Raw Link
+        <input id="rawLink" readonly style="display:none" />
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Disalin!</div>
+
+  <script>
+    const TOKEN = "TOKET";
+    const USER = "nixy-pro";
+    const REPO = "random";
+    const branch = "main";
+
+    const input = document.getElementById('fileInput');
+    const fileNameBox = document.getElementById('fileName');
+    const progress = document.getElementById('progressContainer');
+    const bar = document.getElementById('bar');
+
+    input.addEventListener('change', () => {
+      if (input.files.length > 0) {
+        fileNameBox.textContent = input.files[0].name;
+      }
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2000);
+    }
+
+    async function uploadFile() {
+      const file = input.files[0];
+      if (!file) return alert("Pilih file dulu!");
+
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = btoa([...new Uint8Array(arrayBuffer)].map(b => String.fromCharCode(b)).join(""));
+
+      const now = new Date().toISOString().replace(/[:.]/g, "-");
+      const safeName = file.name.replace(/\s/g, "_");
+      const path = `random/${now}-${safeName}`;
+
+      progress.style.display = "block";
+      bar.style.width = "10%";
+      bar.innerText = "Uploading...";
+
+      fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${path}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `token ${TOKEN}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: `Upload ${file.name} via DEWA++`,
+          content: base64,
+          branch: branch
+        })
+      })
+      .then(res => res.json())
+      .then(json => {
+        if (json.content && json.content.download_url) {
+          bar.style.width = "100%";
+          bar.innerText = "Upload Sukses!";
+
+          const preview = `https://github.com/${USER}/${REPO}/blob/${branch}/${path}`;
+          const raw = `https://raw.githubusercontent.com/${USER}/${REPO}/${branch}/${path}`;
+
+          document.getElementById("previewLink").value = preview;
+          document.getElementById("rawLink").value = raw;
+          document.getElementById("result").style.display = "block";
+        } else {
+          alert("❌ Gagal upload: " + (json.message || "Unknown error"));
+          bar.style.width = "0%";
+          bar.innerText = "Gagal";
+        }
+      }).catch(err => {
+        alert("❌ Network error: " + err.message);
+        bar.style.width = "0%";
+        bar.innerText = "Gagal";
+      });
+    }
+
+    function copyLink(id) {
+      const input = document.getElementById(id);
+      if (!input.value) return;
+      navigator.clipboard.writeText(input.value);
+      showToast("📋 Link disalin!");
+    }
+  </script>
+</body>
+</html>
